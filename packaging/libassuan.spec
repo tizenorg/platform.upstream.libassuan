@@ -8,7 +8,6 @@ Group:          Development/Libraries/C and C++
 Source:         %{name}-%{version}.tar.bz2
 Source1:        baselibs.conf
 BuildRequires:  libgpg-error-devel >= 1.4
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
 Libassuan is the IPC library used by gpg2 (GnuPG version 2)

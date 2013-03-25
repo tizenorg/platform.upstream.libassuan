@@ -4,7 +4,7 @@ Release:        0
 License:        GPL-2.0+ ; LGPL-2.1+
 Summary:        IPC library used by GnuPG version 2
 Url:            http://www.gnupg.org/aegypten2/index.html
-Group:          Development/Libraries/C and C++
+Group:          Security/Libraries
 Source:         %{name}-%{version}.tar.bz2
 Source1:        baselibs.conf
 BuildRequires:  libgpg-error-devel >= 1.4
@@ -14,6 +14,7 @@ Libassuan is the IPC library used by gpg2 (GnuPG version 2)
 
 %package devel
 Summary:        IPC library used by GnuPG version 2
+Group:          Development/Libraries
 Requires:       libassuan = %{version}
 Requires:       libgpg-error-devel
 
@@ -40,15 +41,9 @@ make %{?_smp_mflags}
 
 %postun -p /sbin/ldconfig
 
-%post devel
-%install_info --info-dir=%{_infodir} %{_infodir}/assuan.info.gz
-
-%postun devel
-%install_info_delete --info-dir=%{_infodir} %{_infodir}/assuan.info.gz
-
-
 %files
 %defattr(-,root,root)
+%license COPYING
 %{_libdir}/libassuan.so.*
 
 %files devel

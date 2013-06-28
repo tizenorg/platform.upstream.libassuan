@@ -7,6 +7,7 @@ Url:            http://www.gnupg.org/aegypten2/index.html
 Group:          Security/Libraries
 Source:         %{name}-%{version}.tar.bz2
 Source1:        baselibs.conf
+Source1001: 	libassuan.manifest
 BuildRequires:  libgpg-error-devel >= 1.4
 
 %description
@@ -26,6 +27,7 @@ v2 server, but it uses it's own copy of libassuan.
 
 %prep
 %setup -q
+cp %{SOURCE1001} .
 
 %build
 # Compile with PIC, library is linked into shared libraries:
@@ -42,11 +44,13 @@ make %{?_smp_mflags}
 %postun -p /sbin/ldconfig
 
 %files
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %license COPYING
 %{_libdir}/libassuan.so.*
 
 %files devel
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %doc %{_infodir}/assuan*
 %{_includedir}/*.h

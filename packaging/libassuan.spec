@@ -1,13 +1,13 @@
 Name:           libassuan
 Version:        2.1.2
 Release:        0
-License:        GPL-2.0+ ; LGPL-2.1+
+License:        GPL-3.0+ or LGPL-2.1+
 Summary:        IPC library used by GnuPG version 2
 Url:            http://www.gnupg.org/aegypten2/index.html
 Group:          Security/Libraries
 Source:         %{name}-%{version}.tar.bz2
 Source1:        baselibs.conf
-Source1001: 	libassuan.manifest
+Source1001:     libassuan.manifest
 BuildRequires:  libgpg-error-devel >= 1.4
 
 %description
@@ -33,8 +33,8 @@ cp %{SOURCE1001} .
 # Compile with PIC, library is linked into shared libraries:
 export CFLAGS="%{optflags}"
 export LDFLAGS="-fPIC"
-%configure
-make %{?_smp_mflags}
+%reconfigure
+%__make %{?_smp_mflags}
 
 %install
 %make_install
@@ -46,7 +46,7 @@ make %{?_smp_mflags}
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root)
-%license COPYING
+%license COPYING COPYING.LIB
 %{_libdir}/libassuan.so.*
 
 %files devel
@@ -55,8 +55,5 @@ make %{?_smp_mflags}
 %doc %{_infodir}/assuan*
 %{_includedir}/*.h
 %{_bindir}/*-config
-%dir %{_datadir}/aclocal
 %{_datadir}/aclocal/*.m4
 %{_libdir}/libassuan.so
-
-%changelog

@@ -40,7 +40,7 @@
 
 #include "assuan.h"
 
-#if __GNUC__ > 2 
+#if __GNUC__ > 2
 # define ASSUAN_GCC_A_PURE  __attribute__ ((__pure__))
 #else
 # define ASSUAN_GCC_A_PURE
@@ -53,9 +53,6 @@
 #endif
 
 #define LINELENGTH ASSUAN_LINELENGTH
-
-/* Generate an error code specific to a context.  */
-#define _assuan_error(ctx, errcode) gpg_err_make ((ctx)->err_source, errcode)
 
 
 struct cmdtbl_s
@@ -97,6 +94,7 @@ struct assuan_context_s
     unsigned int no_fixsignals : 1;
     unsigned int convey_comments : 1;
     unsigned int no_logging : 1;
+    unsigned int force_close : 1;
   } flags;
 
   /* If set, this is called right before logging an I/O line.  */
@@ -199,7 +197,7 @@ struct assuan_context_s
   struct cmdtbl_s *cmdtbl;
   size_t cmdtbl_used; /* used entries */
   size_t cmdtbl_size; /* allocated size of table */
-  
+
   /* The name of the command currently processed by a command handler.
      This is a pointer into CMDTBL.  NULL if not in a command
      handler.  */
@@ -224,7 +222,15 @@ struct assuan_context_s
   assuan_fd_t output_fd;  /* Set by the OUTPUT command.  */
 };
 
+
 
+/* Generate an error code specific to a context.  */
+static GPG_ERR_INLINE gpg_error_t
+_assuan_error (assuan_context_t ctx, gpg_err_code_t errcode)
+{
+  return gpg_err_make (ctx?ctx->err_source:0, errcode);
+}
+
 /* Release all resources associated with an engine operation.  */
 void _assuan_reset (assuan_context_t ctx);
 
@@ -396,12 +402,15 @@ int _assuan_asprintf (char **buf, const char *fmt, ...);
 
 #define DIM(v)		     (sizeof(v)/sizeof((v)[0]))
 
-#if HAVE_W32_SYSTEM
-#define SOCKET2HANDLE(s) ((void *)(s))
-#define HANDLE2SOCKET(h) ((unsigned int)(h))
+#if HAVE_W64_SYSTEM
+# define SOCKET2HANDLE(s) ((void *)(s))
+# define HANDLE2SOCKET(h) ((uintptr_t)(h))
+#elif HAVE_W32_SYSTEM
+# define SOCKET2HANDLE(s) ((void *)(s))
+# define HANDLE2SOCKET(h) ((unsigned int)(h))
 #else
-#define SOCKET2HANDLE(s) (s)
-#define HANDLE2SOCKET(h) (h)
+# define SOCKET2HANDLE(s) (s)
+# define HANDLE2SOCKET(h) (h)
 #endif
 
 

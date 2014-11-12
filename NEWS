@@ -1,4 +1,52 @@
-Noteworthy changes in version 2.0.2 (2010-06-16)
+Noteworthy changes in version 2.1.2 (2014-08-17) [C4/A4/R2]
+------------------------------------------------
+
+ * Fixed portability bugs for Solaris and AIX.
+
+ * Added support for ppc64le.
+
+
+Noteworthy changes in version 2.1.1 (2013-06-24) [C4/A4/R1]
+------------------------------------------------
+
+ * Limited support for 64 bit Windows.  This is sufficient for use by
+   GpgEX.
+
+
+Noteworthy changes in version 2.1.0 (2013-02-22)
+------------------------------------------------
+
+ * Support for the nPth library.
+
+ * Add assuan_check_version and two version macros.
+
+ * Interface changes relative to the 2.0.3 release:
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ ASSUAN_SYSTEM_NPTH_IMPL  NEW macro.
+ ASSUAN_SYSTEM_NPTH       NEW macro.
+ __assuan_read            NEW (private).
+ __assuan_write           NEW (private).
+ __assuan_recvmsg         NEW (private).
+ __assuan_sendmsg         NEW (private).
+ __assuan_waitpid         NEW (private).
+ ASSUAN_VERSION           NEW macro.
+ ASSUAN_VERSION_NUMBER    NEW macro.
+ assuan_check_version     NEW.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Noteworthy changes in version 2.0.3 (2011-12-20)
+------------------------------------------------
+
+ * Make assuan_get_pid work correctly for pipe server.
+
+ * Interface changes relative to the 2.0.2 release:
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ ASSUAN_FORCE_CLOSE       NEW.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Noteworthy changes in version 2.0.2 (2011-06-16)
 ------------------------------------------------
 
  * A new flag may now be used to convey comments via assuan_transact.
@@ -339,7 +387,8 @@ Noteworthy changes in version 0.6.0 (2003-08-06)
  * Initial release as a standalone library.
 
 
- Copyright 2003, 2004, 2006, 2007, 2011 Free Software Foundation, Inc.
+ Copyright 2003, 2004, 2006, 2007, 2011,
+           2013 Free Software Foundation, Inc.
 
  This file is free software; as a special exception the author gives
  unlimited permission to copy and/or distribute it, with or without

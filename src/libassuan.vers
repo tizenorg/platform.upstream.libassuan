@@ -100,6 +100,7 @@ LIBASSUAN_1.0 {
     assuan_write_status;
     assuan_free;
     assuan_socket_connect_fd;
+    assuan_check_version;
 
     __assuan_close;
     __assuan_pipe;
@@ -108,6 +109,11 @@ LIBASSUAN_1.0 {
     __assuan_usleep;
     __assuan_socket;
     __assuan_connect;
+    __assuan_read;
+    __assuan_write;
+    __assuan_recvmsg;
+    __assuan_sendmsg;
+    __assuan_waitpid;
 
   local:
     *;

@@ -1,5 +1,7 @@
 # configure.ac - for libassuan
-# Copyright (C) 2001-2003, 2006, 2007, 2009 Free Software Foundation, Inc.
+# Copyright (C) 2001, 2002, 2003, 2006, 2007, 2009,
+#               2011, 2012, 2013 Free Software Foundation, Inc.
+# Copyright (C) 2013, 2014  g10 Code GmbH
 #
 # This file is part of Assuan.
 #
@@ -21,20 +23,34 @@
 AC_PREREQ(2.61)
 min_automake_version="1.10"
 
-# Remember to change the version number immediately *after* a release.
-# Set my_issvn to "yes" for non-released code.  Remember to run an
-# "svn up" and "autogen.sh" right before creating a distribution.
-m4_define([my_version], [2.0.2])
-m4_define([my_issvn], [no])
+# To build a release you need to create a tag with the version number
+# (git tag -s libassuan-n.m.k) and run "./autogen.sh --force".  Please
+# bump the version number immediately after the release and do another
+# commit and push so that the git magic is able to work.  See below
+# for the LT versions.
+m4_define([mym4_package],[libassuan])
+m4_define([mym4_major], [2])
+m4_define([mym4_minor], [1])
+m4_define([mym4_micro], [2])
 
-m4_define([svn_revision], m4_esyscmd([printf "%d" $( (svn info 2>/dev/null \
-            || echo 'Revision: 0')|sed -n '/^Revision:/ {s/[^0-9]//gp;q;}')]))
-m4_define([git_revision], m4_esyscmd([git branch -v 2>/dev/null \
-          | awk '/^\* / {printf "%s",$3}']))
-AC_INIT([libassuan],
-        [my_version[]m4_if(my_issvn,[yes],
-        [m4_if(git_revision,[],[-svn[]svn_revision],[-git[]git_revision])])],
-        [bug-libassuan@gnupg.org])
+# To start a new development series, i.e a new major or minor number
+# you need to mark an arbitrary commit before the first beta release
+# with an annotated tag.  For example a 2.1 branch starts off with
+# the tag "foo-2.1-base".  This is used as the base for counting
+# beta numbers before the first release of a series.
+
+# Below is m4 magic to extract and compute the git revision number,
+# the decimalized short revision number, a beta version string and a
+# flag indicating a development version (mym4_isbeta).  Note that the
+# m4 processing is done by autoconf and not during the configure run.
+m4_define([mym4_verslist], m4_split(m4_esyscmd([./autogen.sh --find-version] \
+                           mym4_package mym4_major mym4_minor mym4_micro),[:]))
+m4_define([mym4_isbeta],       m4_argn(2, mym4_verslist))
+m4_define([mym4_version],      m4_argn(4, mym4_verslist))
+m4_define([mym4_revision],     m4_argn(7, mym4_verslist))
+m4_define([mym4_revision_dec], m4_argn(8, mym4_verslist))
+
+AC_INIT([mym4_package],[mym4_version], [http://bugs.gnupg.org])
 
 # LT Version numbers, remember to change them just *before* a release.
 #   (Code changed:			REVISION++)
@@ -42,9 +58,9 @@ AC_INIT([libassuan],
 #   (Interfaces added:			AGE++)
 #   (Interfaces removed/changed:	AGE=0)
 #
-LIBASSUAN_LT_CURRENT=2
-LIBASSUAN_LT_AGE=2
-LIBASSUAN_LT_REVISION=0
+LIBASSUAN_LT_CURRENT=4
+LIBASSUAN_LT_AGE=4
+LIBASSUAN_LT_REVISION=2
 
 # If the API is changed in an incompatible way: increment the next counter.
 LIBASSUAN_CONFIG_API_VERSION=2
@@ -54,16 +70,17 @@ AC_SUBST(LIBASSUAN_LT_CURRENT)
 AC_SUBST(LIBASSUAN_LT_AGE)
 AC_SUBST(LIBASSUAN_LT_REVISION)
 
-BUILD_REVISION=m4_if(git_revision,[],[svn_revision],[git_revision])
 PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 
+AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_SRCDIR(src/assuan.h.in)
 AC_CONFIG_MACRO_DIR(m4)
 AM_CONFIG_HEADER(config.h)
 AC_CANONICAL_HOST
+AM_SILENT_RULES
 AB_INIT
 
 AC_GNU_SOURCE
@@ -73,8 +90,10 @@ AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of this package])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version of this package])
-AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT, "$PACKAGE_BUGREPORT",
-                                        [Bug report address])
+AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT, "$PACKAGE_BUGREPORT",[Bug report address])
+VERSION_NUMBER=m4_esyscmd(printf "0x%02x%02x%02x" mym4_major \
+                          mym4_minor mym4_micro)
+AC_SUBST(VERSION_NUMBER)
 
 
 # Don't default to build static libs.
@@ -155,7 +174,7 @@ if test "$GCC" = yes; then
     AC_MSG_CHECKING([if gcc supports -Wpointer-arith])
     _gcc_cflags_save=$CFLAGS
     CFLAGS="-Wpointer-arith"
-    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),_gcc_wopt=yes,_gcc_wopt=no)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],_gcc_wopt=yes,_gcc_wopt=no)
     AC_MSG_RESULT($_gcc_wopt)
     CFLAGS=$_gcc_cflags_save;
     if test x"$_gcc_wopt" = xyes ; then
@@ -178,6 +197,7 @@ case "${host}" in
         fi
         ;;
     x86_64-*mingw32*)
+        have_dosish_system=yes
         have_w32_system=yes
         have_w64_system=yes
         ;;
@@ -203,7 +223,6 @@ if test "$have_dosish_system" = yes; then
               (DOS, Windoze. OS/2) with special properties like
               no file modes])
 fi
-dnl AM_CONDITIONAL(HAVE_DOSISH_SYSTEM, test "$have_dosish_system" = yes)
 
 if test "$have_w32_system" = yes; then
     AC_DEFINE(HAVE_W32_SYSTEM,1,[Defined if we run on a W32 API based system])
@@ -214,27 +233,36 @@ if test "$have_w32_system" = yes; then
     if test "$have_w32ce_system" = yes; then
        AC_DEFINE(HAVE_W32CE_SYSTEM,1,[Defined if we run on WindowsCE])
     fi
-    BUILD_TIMESTAMP=`date --iso-8601=minutes`
-    AC_SUBST(BUILD_TIMESTAMP)
-    changequote(,)dnl
-    BUILD_FILEVERSION=`echo "$VERSION" | sed 's/\([0-9.]*\).*/\1./;s/\./,/g'`
-    changequote([,])dnl
-    case "$VERSION" in
-      *-svn*) BUILD_FILEVERSION="${BUILD_FILEVERSION}0" ;;
-      *-cvs)  BUILD_FILEVERSION="${BUILD_FILEVERSION}0" ;;
-      *-rc*)  BUILD_FILEVERSION="${BUILD_FILEVERSION}1" ;;
-      *)      BUILD_FILEVERSION="${BUILD_FILEVERSION}2" ;;
-    esac
 fi
-AC_SUBST(BUILD_REVISION)
-AC_SUBST(BUILD_TIMESTAMP)
-AC_SUBST(BUILD_FILEVERSION)
 AM_CONDITIONAL(HAVE_W32_SYSTEM, test "$have_w32_system" = yes)
 AM_CONDITIONAL(HAVE_W32CE_SYSTEM, test "$have_w32ce_system" = yes)
 AM_CONDITIONAL(HAVE_W64_SYSTEM, test "$have_w64_system" = yes)
 
 
+#
+# Provide information about the build.
+#
+BUILD_REVISION="mym4_revision"
+AC_SUBST(BUILD_REVISION)
+AC_DEFINE_UNQUOTED(BUILD_REVISION, "$BUILD_REVISION",
+                   [GIT commit id revision used to build this package])
+
+changequote(,)dnl
+BUILD_FILEVERSION=`echo "$VERSION" | sed 's/\([0-9.]*\).*/\1./;s/\./,/g'`
+changequote([,])dnl
+BUILD_FILEVERSION="${BUILD_FILEVERSION}mym4_revision_dec"
+AC_SUBST(BUILD_FILEVERSION)
+
+BUILD_TIMESTAMP=`date -u +%Y-%m-%dT%H:%M+0000 2>/dev/null || date`
+AC_SUBST(BUILD_TIMESTAMP)
+AC_DEFINE_UNQUOTED(BUILD_TIMESTAMP, "$BUILD_TIMESTAMP",
+                   [The time this package was configured for a build])
+
+
+
+#
 # Check for network libraries.  They are needed for tests.
+#
 AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt,
 	[NETLIBS="-lsocket $NETLIBS"]))
 AC_SUBST(NETLIBS)
@@ -248,8 +276,9 @@ if test "$have_w32_system" = yes; then
    fi
 fi
 
-
-# For src/libassuan-config.in
+#
+# Provide info for src/libassuan-config.in
+#
 LIBASSUAN_CONFIG_LIB="-lassuan"
 LIBASSUAN_CONFIG_CFLAGS=""
 LIBASSUAN_CONFIG_HOST="$host"
@@ -263,7 +292,9 @@ AC_SUBST(LIBASSUAN_CONFIG_HOST)
 AC_SUBST(LIBASSUAN_CONFIG_API_VERSION)
 AC_SUBST(LIBASSUAN_CONFIG_EXTRA_LIBS)
 
+#
 # Checks for header files.
+#
 AC_HEADER_STDC
 AC_CHECK_HEADERS([string.h locale.h sys/uio.h stdint.h inttypes.h \
                   sys/types.h sys/stat.h unistd.h sys/time.h fcntl.h \
@@ -271,7 +302,9 @@ AC_CHECK_HEADERS([string.h locale.h sys/uio.h stdint.h inttypes.h \
 AC_TYPE_UINTPTR_T
 AC_TYPE_UINT16_T
 
+#
 # Checks for typedefs, structures, and compiler characteristics.
+#
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_SIZE_T
@@ -365,13 +398,40 @@ AC_CACHE_VAL(assuan_cv_sys_so_peercred,
           assuan_cv_sys_so_peercred=no)
        ])
 AC_MSG_RESULT($assuan_cv_sys_so_peercred)
+
 if test $assuan_cv_sys_so_peercred = yes; then
   AC_DEFINE(HAVE_SO_PEERCRED, 1,
             [Defined if SO_PEERCRED is supported (Linux specific)])
+else
+  # Check for the getsockopt LOCAL_PEEREID (NetBSD)
+  AC_MSG_CHECKING(for LOCAL_PEEREID)
+  AC_CACHE_VAL(assuan_cv_sys_so_local_peereid,
+      [AC_TRY_COMPILE([#include <sys/socket.>
+         #include <sys/un.h>],
+         [struct unpcbid unp;
+          int unpl = sizeof unp;
+          getsockopt (1, SOL_SOCKET, LOCAL_PEEREID, &unp, &unpl);],
+          assuan_cv_sys_so_local_peereid=yes,
+          assuan_cv_sys_so_local_peereid=no)
+       ])
+  AC_MSG_RESULT($assuan_cv_sys_so_local_peereid)
+
+  if test $assuan_cv_sys_so_local_peereid = yes; then
+    AC_DEFINE(HAVE_LOCAL_PEEREID, 1,
+              [Defined if LOCAL_PEEREID is supported (NetBSD specific)])
+  else
+    # (Open)Solaris
+    AC_CHECK_FUNCS([getpeerucred], AC_CHECK_HEADERS([ucred.h]))
+    if test $ac_cv_func_getpeerucred != yes; then
+        # FreeBSD
+        AC_CHECK_FUNCS([getpeereid])
+    fi
+  fi
 fi
 
-
+#
 # Create the config files.
+#
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([m4/Makefile])
 AC_CONFIG_FILES([src/Makefile])
@@ -381,3 +441,10 @@ AC_CONFIG_FILES([src/libassuan-config], [chmod +x src/libassuan-config])
 AC_CONFIG_FILES([src/versioninfo.rc])
 
 AC_OUTPUT
+
+echo "
+        Libassuan v${VERSION} has been configured as follows:
+
+        Revision: mym4_revision  (mym4_revision_dec)
+        Platform: $host
+"

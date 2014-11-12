@@ -1,5 +1,5 @@
 Name:           libassuan
-Version:        2.0.2
+Version:        2.1.2
 Release:        0
 License:        GPL-2.0+ ; LGPL-2.1+
 Summary:        IPC library used by GnuPG version 2
